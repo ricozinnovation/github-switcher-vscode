@@ -1,0 +1,243 @@
+{
+  "name": "github-switcher",
+  "displayName": "GitHub Switcher",
+  "description": "Switch the workspace to another GitHub repository from a quick pick, saving your current work to a temporary branch first.",
+  "version": "0.1.0",
+  "publisher": "ricozinnovation",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0",
+    "node": ">=18"
+  },
+  "categories": [
+    "SCM Providers",
+    "Other"
+  ],
+  "keywords": [
+    "github",
+    "git",
+    "repository",
+    "switch",
+    "workspace",
+    "temp branch"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "The extension runs Git and stores a GitHub access token, so it is disabled in untrusted workspaces."
+    },
+    "virtualWorkspaces": false
+  },
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "githubSwitcher",
+          "title": "GitHub Switcher",
+          "icon": "resources/github-switcher.svg"
+        }
+      ]
+    },
+    "views": {
+      "githubSwitcher": [
+        {
+          "id": "githubSwitcher.repositories",
+          "name": "Repositories",
+          "contextualTitle": "GitHub Switcher"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "githubSwitcher.switchRepository",
+        "title": "Switch Repository",
+        "category": "GitHub Switcher",
+        "icon": "$(arrow-swap)"
+      },
+      {
+        "command": "githubSwitcher.saveCurrentWork",
+        "title": "Save Current Work to Temporary Branch",
+        "category": "GitHub Switcher",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "githubSwitcher.refreshRepositories",
+        "title": "Refresh Repository List",
+        "category": "GitHub Switcher",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "githubSwitcher.setup",
+        "title": "Run Setup (token, account, workspace folder)",
+        "category": "GitHub Switcher",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "githubSwitcher.setToken",
+        "title": "Set GitHub Token",
+        "category": "GitHub Switcher"
+      },
+      {
+        "command": "githubSwitcher.setUsername",
+        "title": "Set GitHub Username",
+        "category": "GitHub Switcher"
+      },
+      {
+        "command": "githubSwitcher.setWorkspaceDirectory",
+        "title": "Set Workspace Directory",
+        "category": "GitHub Switcher"
+      },
+      {
+        "command": "githubSwitcher.cleanupBackups",
+        "title": "Clean Up Leftover Backups",
+        "category": "GitHub Switcher",
+        "icon": "$(trash)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "githubSwitcher.switchRepository",
+          "when": "view == githubSwitcher.repositories",
+          "group": "navigation@1"
+        },
+        {
+          "command": "githubSwitcher.refreshRepositories",
+          "when": "view == githubSwitcher.repositories",
+          "group": "navigation@2"
+        },
+        {
+          "command": "githubSwitcher.setup",
+          "when": "view == githubSwitcher.repositories",
+          "group": "navigation@3"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "githubSwitcher.switchRepository",
+          "when": "viewItem == repository",
+          "group": "1_switch@1"
+        },
+        {
+          "command": "githubSwitcher.cleanupBackups",
+          "when": "viewItem == repository",
+          "group": "9_maintenance@1"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "GitHub Switcher",
+      "properties": {
+        "githubSwitcher.configFile": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Path to a `switch.config.sh` file. `GITHUB_USERNAME`, `GITHUB_PAT`, `WORKSPACE_DIR`, `DEFAULT_BRANCH`, `TEMP_BRANCH_PREFIX` and `REPO_LIMIT` are read from it when the matching setting below is empty. When empty, a `switch.config.sh` next to the open folder is used automatically."
+        },
+        "githubSwitcher.githubUsername": {
+          "type": "string",
+          "default": "",
+          "description": "GitHub login used to build temporary branch names (temp/<username>/<branch>). Leave empty to use the authenticated account."
+        },
+        "githubSwitcher.workspaceDirectory": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute path of the directory that is replaced when switching repositories. Leave empty to use the folder open in VS Code. Relative paths are resolved against the directory of the config file."
+        },
+        "githubSwitcher.defaultBranch": {
+          "type": "string",
+          "default": "develop",
+          "description": "Branch to check out after cloning. Falls back to the repository default branch when the branch does not exist."
+        },
+        "githubSwitcher.tempBranchPrefix": {
+          "type": "string",
+          "default": "temp",
+          "description": "Prefix used for temporary branches that hold saved work."
+        },
+        "githubSwitcher.repoLimit": {
+          "type": "number",
+          "default": 1000,
+          "minimum": 1,
+          "maximum": 100000,
+          "description": "Maximum number of repositories fetched from the GitHub API."
+        },
+        "githubSwitcher.affiliation": {
+          "type": "string",
+          "default": "owner,collaborator,organization_member",
+          "description": "Repository affiliation filter passed to the GitHub API."
+        },
+        "githubSwitcher.apiBaseUrl": {
+          "type": "string",
+          "default": "https://api.github.com",
+          "description": "GitHub REST API base URL. Change this for GitHub Enterprise."
+        },
+        "githubSwitcher.gitHost": {
+          "type": "string",
+          "default": "github.com",
+          "description": "Git host used to build clone URLs."
+        },
+        "githubSwitcher.gitPath": {
+          "type": "string",
+          "default": "git",
+          "description": "Path to the git executable."
+        },
+        "githubSwitcher.ghPath": {
+          "type": "string",
+          "default": "gh",
+          "description": "Path to the GitHub CLI executable. It is used for authentication when it is signed in to the same account."
+        },
+        "githubSwitcher.useGitHubCli": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use the GitHub CLI credential helper for clone, fetch and push when it is available."
+        },
+        "githubSwitcher.storeCredentials": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Store the token in the Git credential store of the cloned repository (Windows Credential Manager, macOS Keychain) so plain `git pull` and `git push` keep working."
+        },
+        "githubSwitcher.confirmBeforeSwitch": {
+          "type": "boolean",
+          "default": true,
+          "description": "Ask for confirmation before the workspace directory is replaced."
+        },
+        "githubSwitcher.reloadAfterSwitch": {
+          "type": "boolean",
+          "default": true,
+          "description": "Reload the window after a successful switch so VS Code picks up the new repository."
+        },
+        "githubSwitcher.showStatusBarItem": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the current repository and branch in the status bar."
+        },
+        "githubSwitcher.listCacheMinutes": {
+          "type": "number",
+          "default": 5,
+          "minimum": 0,
+          "maximum": 120,
+          "description": "How long the fetched repository list is reused before it is requested again."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "typecheck": "tsc -p ./ --noEmit",
+    "pretest": "npm run compile",
+    "test": "node --test \"out/test/**/*.test.js\"",
+    "test:integration": "tsc -p ./ && node out/test/integration.js",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^2.32.0",
+    "typescript": "^5.6.3"
+  }
+}
